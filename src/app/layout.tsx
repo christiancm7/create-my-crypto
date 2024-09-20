@@ -1,7 +1,7 @@
-import { Header } from "./components/header";
-import { Providers } from "./components/providers";
-import { ThemeWrapper } from "./components/providers/themeProvider";
-import { Sidebar } from "./components/sidebar";
+import { Header } from "../components/header";
+import { Providers } from "../components/providers";
+import { ThemeWrapper } from "../components/providers/themeProvider";
+import { Sidebar } from "../components/sidebar";
 import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 
