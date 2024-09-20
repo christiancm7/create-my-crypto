@@ -3,54 +3,55 @@ import { MinusSmallIcon, PlusSmallIcon } from "@heroicons/react/24/outline";
 
 const faqs = [
   {
-    question: "What is cryptocurrency?",
+    question: "What is a token creator?",
     answer:
-      "Cryptocurrency is a digital or virtual currency that uses cryptography for security. It operates independently of a central bank and can be transferred directly between individuals without intermediaries.",
+      "A token creator is a tool that allows you to create your own cryptocurrency tokens on a blockchain network, such as Ethereum or Base, without needing to write complex smart contract code yourself.",
   },
   {
-    question: "How do cryptocurrencies work?",
+    question: "How much does it cost to create a token?",
     answer:
-      "Cryptocurrencies work using a technology called blockchain. This is a decentralized technology spread across many computers that manages and records transactions. Part of the appeal of this technology is its security.",
+      "The token creation currently costs 0.01 ETH, which covers all fees necessary for Token Creation on the chosen network (Ethereum or Base mainnet).",
   },
   {
-    question: "What is Bitcoin?",
+    question: "How long does the token creation process take?",
     answer:
-      "Bitcoin is the first and most well-known cryptocurrency. It was created in 2009 by an unknown person using the alias Satoshi Nakamoto. Like other cryptocurrencies, Bitcoin allows for secure peer-to-peer transactions on the internet.",
+      "Once you initiate the creation process, it typically takes only a few moments to complete. After creation, the total supply of your new token will be sent directly to your connected wallet.",
   },
   {
-    question: "What is blockchain technology?",
+    question: "What information do I need to create a token?",
     answer:
-      "Blockchain is a distributed ledger technology that allows data to be stored globally on thousands of servers. It's the underlying technology that enables cryptocurrencies to function in a decentralized manner.",
+      "To create a token, you'll need to provide a token name, symbol (up to 8 characters), total supply, and optionally, a tax percentage.",
   },
   {
-    question: "How do I buy cryptocurrency?",
+    question: "Can I create tokens on different networks?",
     answer:
-      "You can buy cryptocurrencies through crypto exchanges, some traditional brokers, and even payment services like PayPal. You'll need to set up and fund an account, place an order, and securely store your purchased cryptocurrency.",
+      "Yes, our platform supports token creation on both Ethereum and Base networks. You can choose the network that best suits your needs.",
   },
   {
-    question: "What is a crypto wallet?",
+    question:
+      "What's the difference between Ethereum and Base for token creation?",
     answer:
-      "A crypto wallet is a software program or physical device that stores your private and public keys and interacts with various blockchain to enable users to send and receive digital currency and monitor their balance.",
+      "Ethereum is the original and most widely used network for token creation, while Base is a newer, more scalable network. Base typically offers lower transaction fees and faster confirmation times.",
   },
   {
-    question: "Are cryptocurrencies legal?",
+    question: "Do I need technical knowledge to create a token?",
     answer:
-      "The legality of cryptocurrencies varies by country. Some have embraced them, while others have imposed restrictions or bans. It's important to check the regulations in your jurisdiction before engaging with cryptocurrencies.",
+      "No, our user-friendly platform is designed for both beginners and experienced users. You don't need any coding knowledge to create your token.",
   },
   {
-    question: "What are the risks of investing in cryptocurrencies?",
+    question: "What can I do with my created token?",
     answer:
-      "Cryptocurrencies are known for their volatility, which can lead to significant gains or losses. Other risks include regulatory changes, security vulnerabilities, and the potential for scams or fraud in the crypto space.",
+      "Once created, you can use your token for various purposes such as creating a community currency, representing assets, or as part of a larger blockchain project.",
   },
   {
-    question: "What is mining in cryptocurrency?",
+    question: "Is there a limit to how many tokens I can create?",
     answer:
-      "Mining is the process by which new coins are created and transactions are added to the blockchain. Miners use powerful computers to solve complex mathematical problems, and are rewarded with new coins for their efforts.",
+      "There's no limit to the number of tokens you can create. However, each token creation requires a separate transaction and fee.",
   },
   {
-    question: "What is a smart contract?",
+    question: "How secure is the token creation process?",
     answer:
-      "A smart contract is a self-executing contract with the terms of the agreement directly written into code. They automatically execute actions when predetermined conditions are met, without the need for intermediaries.",
+      "Our token creation process uses standard, audited smart contract templates to ensure security. However, always exercise caution and do your own research when dealing with cryptocurrencies.",
   },
 ];
 

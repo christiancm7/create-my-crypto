@@ -1,12 +1,13 @@
 import React from "react";
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 import ContactForm from "@/components/forms/contact";
+import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 
 const CustomerSupportPage = () => {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-        How can we help you?
+        How can we help you with token creation?
       </h1>
 
       <div className="mb-8">
@@ -165,11 +166,16 @@ const CustomerSupportPage = () => {
               </div>
             </div>
             <div className="flex items-start">
-              <Phone className="mr-4 text-gray-400" />
+              <ChatBubbleLeftRightIcon className="mr-4 text-gray-400 h-6 w-6" />
               <div>
-                <h3 className="font-semibold">Phone</h3>
+                <h3 className="font-semibold">Discord</h3>
                 <p className="text-gray-600 dark:text-gray-300">
-                  +1 (555) 123-4567
+                  <a
+                    href="https://discord.gg/yourdiscordlink"
+                    className="hover:underline"
+                  >
+                    Join our community
+                  </a>
                 </p>
               </div>
             </div>

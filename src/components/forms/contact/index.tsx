@@ -1,22 +1,51 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import useWeb3Forms from "@web3forms/react";
 
 const ContactForm = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm();
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    mode: "onTouched",
+  });
 
-  const onSubmit = (data: unknown) => {
-    console.log("Form submitted:", data);
-    // Handle form submission logic here
-  };
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [message, setMessage] = useState("");
+
+  console.log(process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY);
+
+  const { submit: onSubmit } = useWeb3Forms({
+    access_key: process.env.NEXT_PUBLIC_WEB3FORMS_ACCESS_KEY as string,
+    settings: {
+      from_name: "Mission Control",
+      subject: "New Contact Message from Website",
+    },
+    onSuccess: (msg) => {
+      setIsSuccess(true);
+      setMessage(msg);
+      reset();
+    },
+    onError: (msg) => {
+      setIsSuccess(false);
+      setMessage(msg);
+    },
+  });
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <input
+        type="checkbox"
+        id=""
+        className="hidden"
+        style={{ display: "none" }}
+        {...register("botcheck")}
+      />
+
       <div>
         <label
           htmlFor="email"
@@ -136,9 +165,45 @@ const ContactForm = () => {
       <button
         type="submit"
         className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+        disabled={isSubmitting}
       >
-        Send message
+        {isSubmitting ? (
+          <svg
+            className="w-5 h-5 mx-auto text-white animate-spin"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+        ) : (
+          "Send message"
+        )}
       </button>
+
+      {isSuccess && (
+        <div className="text-green-500 mt-4">
+          <p>{message}</p>
+        </div>
+      )}
+
+      {!isSuccess && message && (
+        <div className="text-red-500 mt-4">
+          <p>{message}</p>
+        </div>
+      )}
     </form>
   );
 };

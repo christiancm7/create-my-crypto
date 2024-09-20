@@ -3,13 +3,31 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import Image from "next/image";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsMobileMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   if (!mounted) return null;
 
@@ -18,8 +36,7 @@ export function Header() {
       <div className="flex flex-wrap justify-between items-center">
         <div className="flex justify-start items-center">
           <button
-            data-drawer-target="drawer-navigation"
-            data-drawer-toggle="drawer-navigation"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} // Toggle mobile menu
             aria-controls="drawer-navigation"
             className="p-2 mr-2 text-gray-600 rounded-lg cursor-pointer md:hidden hover:text-gray-900 hover:bg-gray-100 focus:bg-gray-100 dark:focus:bg-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
           >
@@ -52,7 +69,7 @@ export function Header() {
             </span>
           </a>
         </div>
-        <div className=" flex items-center lg:order-2">
+        <div className="flex items-center lg:order-2">
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="hidden sm:block p-2 mr-4 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 focus:ring-1 focus:ring-gray-300 dark:focus:ring-gray-600"
@@ -176,6 +193,51 @@ export function Header() {
           </div>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {isMobileMenuOpen && (
+        <div
+          ref={mobileMenuRef}
+          className="md:hidden bg-white dark:bg-gray-800 p-4 mt-2 space-y-2 rounded-lg shadow-lg absolute top-full left-0 right-0"
+        >
+          <a
+            href="/"
+            className="block px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            Home
+          </a>
+          <a
+            href="/solana"
+            className="block px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            Create Solana Token
+          </a>
+          <a
+            href="/base"
+            className="block px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            Create Base Token
+          </a>
+          <a
+            href="/ethereum"
+            className="block px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            Create Ethereum Token
+          </a>
+          <a
+            href="/settings"
+            className="block px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            Settings
+          </a>
+          <a
+            href="/support"
+            className="block px-4 py-2 text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+          >
+            Support
+          </a>
+        </div>
+      )}
     </nav>
   );
 }
