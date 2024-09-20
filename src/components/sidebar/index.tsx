@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CogIcon } from "@heroicons/react/24/outline";
+import { CogIcon, LifebuoyIcon } from "@heroicons/react/24/outline";
 import { Home } from "lucide-react";
 
 export function Sidebar() {
@@ -193,6 +193,19 @@ export function Sidebar() {
             >
               <CogIcon className="w-5 h-5 transition duration-75 text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
               <span className="ml-3">Settings</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/support"
+              className={`flex items-center p-2 rounded-lg group ${
+                isActive("/support")
+                  ? "bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-white"
+                  : "text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              <LifebuoyIcon className="w-5 h-5 transition duration-75 text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
+              <span className="ml-3">Support</span>
             </Link>
           </li>
         </ul>

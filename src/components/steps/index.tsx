@@ -28,7 +28,7 @@ const perks = [
   },
 ];
 
-export default function Perks() {
+export default function Steps() {
   return (
     <section aria-labelledby="perks-heading">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-32 lg:px-8">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import Faq from "@/components/faq";
 
 export default function EthereumTokenCreator() {
   const {
@@ -165,6 +166,11 @@ export default function EthereumTokenCreator() {
             </div>
           </div>
         </div>
+
+        {/* FAQ section - now full width */}
+      </div>
+      <div className="mt-12 border-gray-200 dark:border-gray-700 pt-8">
+        <Faq />
       </div>
     </div>
   );

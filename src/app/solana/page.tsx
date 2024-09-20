@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import Image from "next/image";
+import Faq from "@/components/faq";
 
 export default function SolanaTokenCreator() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -339,6 +340,11 @@ export default function SolanaTokenCreator() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* FAQ section */}
+      <div className="mt-12 border-gray-200 dark:border-gray-700 pt-8">
+        <Faq />
       </div>
     </div>
   );

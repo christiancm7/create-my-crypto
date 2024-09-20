@@ -4,6 +4,7 @@ import { ThemeWrapper } from "../components/providers/themeProvider";
 import { Sidebar } from "../components/sidebar";
 import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export default function RootLayout({
   children,
@@ -20,6 +21,7 @@ export default function RootLayout({
               <Sidebar />
               <main className="p-4 md:ml-64 h-auto pt-20">{children}</main>
             </div>
+            <SpeedInsights />
           </ThemeWrapper>
         </Providers>
       </body>
