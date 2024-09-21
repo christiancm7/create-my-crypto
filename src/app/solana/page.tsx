@@ -1,269 +1,340 @@
 "use client";
-
-import { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import Image from "next/image";
-import Faq from "@/components/faq";
+
+interface FormData {
+  name: string;
+  symbol: string;
+  decimals: number;
+  supply: number;
+  image: FileList;
+  description: string;
+  tags: string;
+  immutable: boolean;
+  revokeMint: boolean;
+  revokeFreeze: boolean;
+  customCreatorInfo: boolean;
+  createTokenPage: boolean;
+}
 
 export default function SolanaTokenCreator() {
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+    watch,
+    setValue,
+  } = useForm<FormData>();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [totalFee, setTotalFee] = useState(0.1); // Initialize with base fee
 
-  const onSubmit = (data: unknown) => {
+  const updateTotalFee = useCallback((name: string, isChecked: boolean) => {
+    setTotalFee((prevFee) => {
+      const fee = 0.1; // Fee for each additional setting
+      return isChecked ? prevFee + fee : prevFee - fee;
+    });
+  }, []);
+
+  const onSubmit = (data: FormData) => {
+    const file = data.image[0];
     console.log(data);
     // Handle token creation logic here
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  const handleImageChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file && file.type.startsWith("image/")) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    []
+  );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 mt-4 md:mt-0 sm:px-6 lg:px-8 min-h-screen">
-      <div className="py-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Solana Token Creator
-        </h1>
-      </div>
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+      <h1 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">
+        Solana Token Creator
+      </h1>
+      <p className="text-center mb-8 max-w-lg mx-auto text-gray-600 dark:text-gray-300">
+        Create and mint your own SPL Token effortlessly, no coding required.
+        Customize metadata, set supply, add a logo, and launch your token in
+        minutes.
+      </p>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:max-w-xl sm:grid-cols-6">
-            <div className="col-span-full">
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"
-              >
-                Token Name
-              </label>
-              <div className="mt-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+            <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+              Token Information
+            </h2>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Token Name (Max 30)*
+                </label>
                 <input
                   id="name"
                   type="text"
-                  {...register("name", { required: "Name is required" })}
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
-                  placeholder="Enter token name"
-                />
-              </div>
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-500">
-                  {String(errors.name?.message || "")}
-                </p>
-              )}
-            </div>
-
-            <div className="col-span-full sm:col-span-3">
-              <label
-                htmlFor="symbol"
-                className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"
-              >
-                Symbol
-              </label>
-              <div className="mt-2">
-                <input
-                  id="symbol"
-                  type="text"
-                  {...register("symbol", {
-                    required: "Symbol is required",
-                    maxLength: { value: 8, message: "Max 8 characters" },
+                  {...register("name", {
+                    required: "Token name is required",
+                    maxLength: 30,
                   })}
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
-                  placeholder="Enter symbol"
+                  placeholder="My new token"
+                  className="mt-1block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
                 />
+                {errors.name && (
+                  <p className="text-red-500 text-xs italic">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
-              {errors.symbol && (
-                <p className="mt-1 text-sm text-red-500">
-                  {String(errors.symbol.message)}
-                </p>
-              )}
-            </div>
 
-            <div className="col-span-full sm:col-span-3">
-              <label
-                htmlFor="decimals"
-                className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"
-              >
-                Decimals
-              </label>
-              <div className="mt-2">
-                <input
-                  id="decimals"
-                  type="number"
-                  {...register("decimals", {
-                    required: "Decimals are required",
-                    min: { value: 0, message: "Minimum value is 0" },
-                    max: { value: 9, message: "Maximum value is 9" },
-                  })}
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
-                  placeholder="Enter decimals (0-9)"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="symbol"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Token Symbol{" "}
+                    <span className="hidden sm:inline">(Max 10)</span>*
+                  </label>
+                  <input
+                    id="symbol"
+                    type="text"
+                    {...register("symbol", {
+                      required: "Token symbol is required",
+                      maxLength: 10,
+                    })}
+                    placeholder="SOL"
+                    className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
+                  />
+                  {errors.symbol && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.symbol.message}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="decimals"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    Decimals*
+                  </label>
+                  <input
+                    id="decimals"
+                    type="number"
+                    {...register("decimals", {
+                      required: "Decimals are required",
+                      min: 0,
+                      max: 9,
+                    })}
+                    placeholder="9"
+                    className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
+                  />
+                  {errors.decimals && (
+                    <p className="text-red-500 text-xs italic">
+                      {errors.decimals.message}
+                    </p>
+                  )}
+                </div>
               </div>
-              {errors.decimals && (
-                <p className="mt-1 text-sm text-red-500">
-                  {String(errors.decimals.message)}
-                </p>
-              )}
-            </div>
 
-            <div className="col-span-full">
-              <label
-                htmlFor="supply"
-                className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"
-              >
-                Supply
-              </label>
-              <div className="mt-2">
+              <div>
+                <label
+                  htmlFor="supply"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Supply*
+                </label>
                 <input
                   id="supply"
                   type="number"
                   {...register("supply", { required: "Supply is required" })}
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
-                  placeholder="Enter supply"
+                  placeholder="1000000000"
+                  className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
                 />
-              </div>
-              {errors.supply && (
-                <p className="mt-1 text-sm text-red-500">
-                  {String(errors.supply.message)}
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  The initial number of available tokens that will be created in
+                  your wallet
                 </p>
-              )}
-            </div>
+                {errors.supply && (
+                  <p className="text-red-500 text-xs italic">
+                    {errors.supply.message}
+                  </p>
+                )}
+              </div>
 
-            <div className="col-span-full">
-              <label
-                htmlFor="description"
-                className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"
-              >
-                Description
-              </label>
-              <div className="mt-2">
+              <div className="col-span-full">
+                <label
+                  htmlFor="image"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Image
+                </label>
+                <div className="flex items-center justify-center w-full mt-2">
+                  <label
+                    htmlFor="file-upload"
+                    className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+                  >
+                    {imagePreview ? (
+                      <Image
+                        src={imagePreview}
+                        alt="Token preview"
+                        width={200}
+                        height={200}
+                        className="object-contain h-full"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg
+                          className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 20 16"
+                        >
+                          <path
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                          />
+                        </svg>
+                        <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                          <span className="font-semibold">Click to upload</span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          PNG up to 30MB
+                        </p>
+                      </div>
+                    )}
+                    <input
+                      id="file-upload"
+                      type="file"
+                      className="hidden"
+                      onChange={handleImageChange}
+                      accept="image/png"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Description
+                </label>
                 <textarea
                   id="description"
                   {...register("description")}
-                  rows={4}
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
-                  placeholder="Enter token description"
+                  placeholder="Here you can briefly describe your token"
+                  className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
+                  rows={3}
                 ></textarea>
               </div>
-            </div>
 
-            <div className="col-span-full">
-              <label
-                htmlFor="image"
-                className="block text-sm font-medium leading-6 text-gray-900 dark:text-white"
-              >
-                Image
-              </label>
-              <div className="flex items-center justify-center w-full mt-2">
-                <label
-                  htmlFor="file-upload"
-                  className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
-                >
-                  {imagePreview ? (
-                    <Image
-                      src={imagePreview}
-                      alt="Token preview"
-                      width={200}
-                      height={200}
-                      className="object-contain h-full"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <svg
-                        className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 20 16"
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                  Additional settings
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    {
+                      name: "immutable",
+                      fee: 0.1,
+                      description:
+                        "Revoke Update Authority. This makes the token metadata immutable.",
+                    },
+                    {
+                      name: "revokeMint",
+                      fee: 0.1,
+                      description:
+                        "Revoke Mint Authority. This prevents minting more tokens, ensuring a fixed supply.",
+                    },
+                    {
+                      name: "revokeFreeze",
+                      fee: 0.1,
+                      description:
+                        "Revoke Freeze Authority. This removes the ability to freeze token accounts.",
+                    },
+                  ].map(({ name, fee, description }) => (
+                    <div
+                      key={name}
+                      className="flex items-start space-x-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
+                      onClick={() => {
+                        const currentValue = watch(name as keyof FormData);
+                        setValue(name, !currentValue);
+                        updateTotalFee(name, !currentValue);
+                      }}
+                    >
+                      <div
+                        className="relative inline-flex flex-shrink-0 h-5 w-9 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        style={{
+                          backgroundColor: watch(name as keyof FormData)
+                            ? "#4F46E5"
+                            : "#E5E7EB",
+                        }}
                       >
-                        <path
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                        <span
+                          className={`${
+                            watch(name as keyof FormData)
+                              ? "translate-x-4"
+                              : "translate-x-0"
+                          } pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200`}
                         />
-                      </svg>
-                      <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
-                        <span className="font-semibold">Click to upload</span>{" "}
-                        or drag and drop
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        PNG up to 30MB
-                      </p>
+                      </div>
+                      <div className="flex-grow">
+                        <label
+                          htmlFor={name}
+                          className="font-medium text-gray-700 dark:text-gray-300"
+                        >
+                          {name === "immutable"
+                            ? "Revoke Update (Immutable)"
+                            : name.charAt(0).toUpperCase() +
+                              name.slice(1).replace(/([A-Z])/g, " $1")}
+                        </label>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {description}
+                        </p>
+                      </div>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        +{fee} SOL
+                      </span>
                     </div>
-                  )}
-                  <input
-                    id="file-upload"
-                    type="file"
-                    className="hidden"
-                    {...register("image")}
-                    onChange={handleImageChange}
-                    accept="image/png"
-                  />
-                </label>
+                  ))}
+                </div>
               </div>
-            </div>
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200"
+              >
+                Create token
+              </button>
+              <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                Service fee: {totalFee.toFixed(1)} SOL
+              </p>
+            </form>
           </div>
-          <div className="sm:col-span-2">
-            <h3 className="mb-4 text-sm font-medium text-gray-900 dark:text-white">
-              Token Authorities
-            </h3>
-            <ul className="items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-              <li className="w-full border-b border-gray-200 sm:border-b-0 sm:border-r dark:border-gray-600">
-                <div className="flex items-center pl-3">
-                  <input
-                    id="revokeFreeze"
-                    type="checkbox"
-                    {...register("revokeFreeze")}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                  />
-                  <label
-                    htmlFor="revokeFreeze"
-                    className="w-full py-3 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                  >
-                    Revoke Freeze (0.1 SOL)
-                  </label>
-                </div>
-              </li>
-              <li className="w-full dark:border-gray-600">
-                <div className="flex items-center pl-3">
-                  <input
-                    id="revokeMint"
-                    type="checkbox"
-                    {...register("revokeMint")}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-700 dark:focus:ring-offset-gray-700 focus:ring-2 dark:bg-gray-600 dark:border-gray-500"
-                  />
-                  <label
-                    htmlFor="revokeMint"
-                    className="w-full py-3 ml-2 text-sm font-medium text-gray-900 dark:text-gray-300"
-                  >
-                    Revoke Mint (0.1 SOL)
-                  </label>
-                </div>
-              </li>
-            </ul>
-          </div>
-          <button
-            type="submit"
-            className="inline-flex justify-center w-full items-center px-5 py-2.5 mt-4 sm:mt-6 text-sm font-medium text-center text-white bg-blue-600 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors duration-200"
-          >
-            Create Token
-          </button>
-        </form>
+        </div>
 
         <div className="space-y-8">
-          <div className="border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
             <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
               How to use Solana Token Creator
             </h2>
@@ -272,12 +343,8 @@ export default function SolanaTokenCreator() {
               <li>Specify the desired name for your Token</li>
               <li>Indicate the symbol (max 8 characters)</li>
               <li>
-                Select the decimals quantity:
-                <ul className="list-disc list-inside ml-5 mt-1">
-                  <li>0 for Whitelist Token</li>
-                  <li>5 for utility Token</li>
-                  <li>9 for meme token</li>
-                </ul>
+                Select the decimals quantity (0 for Whitelist Token, 5 for
+                utility Token, 9 for meme token).
               </li>
               <li>Provide a brief description for your SPL Token</li>
               <li>Upload the image for your token (PNG)</li>
@@ -289,23 +356,33 @@ export default function SolanaTokenCreator() {
             </ol>
           </div>
 
-          <div className="border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
             <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">
-              Token Authorities
+              Additional Settings
             </h3>
             <div className="space-y-4">
               <div>
-                <h4 className="text-lg font-medium mb-2 text-gray-800 dark:text-gray-200">
+                <h4 className="text-lg font-medium mb-2 text-gray-600 dark:text-gray-400">
+                  Revoke Update Authority (Immutable)
+                </h4>
+                <p className="text-gray-700 dark:text-gray-300">
+                  Revoking update authority makes the token metadata immutable.
+                  This means the token&apos;s information cannot be changed
+                  after creation. The cost is 0.1 SOL.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-lg font-medium mb-2 text-gray-600 dark:text-gray-400">
                   Revoke Freeze Authority
                 </h4>
                 <p className="text-gray-700 dark:text-gray-300">
                   If you want to create a liquidity pool, you&apos;ll need to
-                  &ldquo;`Revoke Freeze Authority&rdquo; of the Token. The cost
-                  is 0.1 SOL.
+                  &quot;Revoke Freeze Authority&quot; of the Token. The cost is
+                  0.1 SOL.
                 </p>
               </div>
               <div>
-                <h4 className="text-lg font-medium mb-2 text-gray-800 dark:text-gray-200">
+                <h4 className="text-lg font-medium mb-2 text-gray-600 dark:text-gray-400">
                   Revoke Mint Authority
                 </h4>
                 <p className="text-gray-700 dark:text-gray-300">
@@ -316,35 +393,7 @@ export default function SolanaTokenCreator() {
               </div>
             </div>
           </div>
-
-          <div className="border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">
-              Token Creation Details
-            </h3>
-            <div className="space-y-3 text-gray-700 dark:text-gray-300">
-              <p>
-                The cost of Token creation is 0.5 SOL, covering all fees for SPL
-                Token Creation.
-              </p>
-              <p>
-                Once the creation process starts, it will only take a few
-                seconds! Upon completion, you will receive the total supply of
-                the token in your wallet.
-              </p>
-              <p>
-                With our user-friendly platform, managing your tokens is simple
-                and affordable. Using your wallet, you can easily create tokens,
-                increase their supply, or freeze them as needed. Discover the
-                ease of Solana Token creation with us!
-              </p>
-            </div>
-          </div>
         </div>
-      </div>
-
-      {/* FAQ section */}
-      <div className="mt-12 border-gray-200 dark:border-gray-700 pt-8">
-        <Faq />
       </div>
     </div>
   );

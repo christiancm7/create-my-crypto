@@ -1,15 +1,21 @@
 "use client";
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  const { connected: solanaConnected, publicKey } = useWallet();
 
   useEffect(() => setMounted(true), []);
 
@@ -31,14 +37,124 @@ export function Header() {
 
   if (!mounted) return null;
 
+  const renderWalletButton = () => {
+    if (pathname !== "/ethereum" && pathname !== "/base") {
+      return (
+        <WalletMultiButton className="!bg-blue-700 hover:!bg-blue-800 !text-white !font-medium !rounded-lg !text-sm !px-3 !py-2 !text-center dark:!bg-blue-600 dark:hover:!bg-blue-700">
+          {solanaConnected && publicKey ? (
+            <span>
+              {publicKey.toBase58().slice(0, 4)}...
+              {publicKey.toBase58().slice(-4)}
+            </span>
+          ) : (
+            "Connect SOL"
+          )}
+        </WalletMultiButton>
+      );
+    } else {
+      return (
+        <ConnectButton.Custom>
+          {({
+            account,
+            chain,
+            openAccountModal,
+            openChainModal,
+            openConnectModal,
+            mounted: rainbowKitMounted,
+          }) => {
+            const ready = rainbowKitMounted;
+            const connected = ready && account && chain;
+
+            return (
+              <div
+                {...(!ready && {
+                  "aria-hidden": true,
+                  style: {
+                    opacity: 0,
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  },
+                })}
+              >
+                {(() => {
+                  if (!connected) {
+                    return (
+                      <button
+                        onClick={openConnectModal}
+                        type="button"
+                        className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                      >
+                        Connect {pathname === "/base" ? "Base" : "ETH"}
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={openChainModal}
+                        className="flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 font-medium rounded-lg text-xs px-2 py-1 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+                      >
+                        {chain.hasIcon && chain.iconUrl && (
+                          <div
+                            style={{
+                              background: chain.iconBackground,
+                              width: 19,
+                              height: 19,
+                              borderRadius: 999,
+                              overflow: "hidden",
+                              marginRight: 4,
+                            }}
+                          >
+                            <Image
+                              alt={chain.name ?? "Chain icon"}
+                              src={chain.iconUrl}
+                              width={19}
+                              height={19}
+                            />
+                          </div>
+                        )}
+                        <span className="hidden sm:inline">{chain.name}</span>
+                      </button>
+
+                      <button
+                        onClick={openAccountModal}
+                        type="button"
+                        className="flex items-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 font-medium rounded-lg text-xs px-2 py-1.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
+                      >
+                        <span className="hidden sm:inline">
+                          {account.displayName}
+                        </span>
+                        <span className="sm:hidden">
+                          {account.displayName.slice(0, 4)}...
+                        </span>
+                        {account.displayBalance && (
+                          <span className="hidden sm:inline">
+                            {" "}
+                            ({account.displayBalance})
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
+            );
+          }}
+        </ConnectButton.Custom>
+      );
+    }
+    return null;
+  };
+
   return (
     <nav className="bg-white border-b border-gray-200 px-4 py-2.5 dark:bg-gray-800 dark:border-gray-700 fixed left-0 right-0 top-0 z-50">
       <div className="flex flex-wrap justify-between items-center">
         <div className="flex justify-start items-center">
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} // Toggle mobile menu
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-controls="drawer-navigation"
-            className="p-2 mr-2 text-gray-600 rounded-lg cursor-pointer md:hidden hover:text-gray-900 hover:bg-gray-100 focus:bg-gray-100 dark:focus:bg-gray-700 focus:ring-2 focus:ring-gray-100 dark:focus:ring-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+            className="p-2 mr-2 text-gray-600 rounded-lg cursor-pointer md:hidden hover:text-gray-900 hover:bg-gray-100 focus:bg-gray-100 dark:focus:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
           >
             <svg
               aria-hidden="true"
@@ -99,97 +215,7 @@ export function Header() {
             )}
           </button>
           <div className={theme === "dark" ? "dark" : ""}>
-            <ConnectButton.Custom>
-              {({
-                account,
-                chain,
-                openAccountModal,
-                openChainModal,
-                openConnectModal,
-                mounted,
-              }) => {
-                const ready = mounted;
-                const connected = ready && account && chain;
-
-                return (
-                  <div
-                    {...(!ready && {
-                      "aria-hidden": true,
-                      style: {
-                        opacity: 0,
-                        pointerEvents: "none",
-                        userSelect: "none",
-                      },
-                    })}
-                  >
-                    {(() => {
-                      if (!connected) {
-                        return (
-                          <button
-                            onClick={openConnectModal}
-                            type="button"
-                            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-3 py-2 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                          >
-                            Connect
-                          </button>
-                        );
-                      }
-
-                      return (
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={openChainModal}
-                            className="flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 font-medium rounded-lg text-xs px-2 py-1 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-                          >
-                            {chain.hasIcon && chain.iconUrl && (
-                              <div
-                                style={{
-                                  background: chain.iconBackground,
-                                  width: 19,
-                                  height: 19,
-                                  borderRadius: 999,
-                                  overflow: "hidden",
-                                  marginRight: 4,
-                                }}
-                              >
-                                <Image
-                                  alt={chain.name ?? "Chain icon"}
-                                  src={chain.iconUrl}
-                                  width={19}
-                                  height={19}
-                                />
-                              </div>
-                            )}
-                            <span className="hidden sm:inline">
-                              {chain.name}
-                            </span>
-                          </button>
-
-                          <button
-                            onClick={openAccountModal}
-                            type="button"
-                            className="flex items-center text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 font-medium rounded-lg text-xs px-2 py-1.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-                          >
-                            <span className="hidden sm:inline">
-                              {account.displayName}
-                            </span>
-                            <span className="sm:hidden">
-                              {account.displayName.slice(0, 4)}...
-                            </span>
-                            {account.displayBalance && (
-                              <span className="hidden sm:inline">
-                                {" "}
-                                ({account.displayBalance})
-                              </span>
-                            )}
-                          </button>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                );
-              }}
-            </ConnectButton.Custom>
+            {renderWalletButton()}
           </div>
         </div>
       </div>

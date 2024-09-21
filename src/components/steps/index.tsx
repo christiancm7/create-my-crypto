@@ -30,28 +30,27 @@ const perks = [
 
 export default function Steps() {
   return (
-    <section aria-labelledby="perks-heading">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-32 lg:px-8">
-        <h2
-          id="perks-heading"
-          className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12"
-        >
+    <div>
+      <h2 className="sr-only">How it works</h2>
+      <div className="mx-auto max-w-7xl py-24 sm:px-2 sm:py-32 lg:px-4">
+        <h2 className="text-3xl font-bold text-center text-gray-900 dark:text-white mb-12">
           How it works
         </h2>
-        <div className="grid grid-cols-1 gap-y-12 sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-4 lg:gap-x-8 lg:gap-y-0">
+        <div className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-12 px-4 lg:max-w-none lg:grid-cols-2 lg:gap-y-16">
           {perks.map((perk) => (
-            <div
-              key={perk.name}
-              className="border-2 border-gray-200 dark:border-gray-700 relative p-2 xl:p-6  bg-white dark:bg-gray-700 rounded-lg shadow-md transition-all duration-300 hover:shadow-lg"
-            >
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 p-3 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 text-white">
-                <perk.Icon size={24} />
+            <div key={perk.name} className="sm:flex">
+              <div className="sm:flex-shrink-0">
+                <div className="flow-root">
+                  <div className="p-3 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 text-white">
+                    <perk.Icon size={24} />
+                  </div>
+                </div>
               </div>
-              <div className="mt-8 text-center">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              <div className="mt-3 sm:ml-3 sm:mt-0">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
                   {perk.name}
                 </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-300">
                   {perk.description}
                 </p>
               </div>
@@ -59,6 +58,6 @@ export default function Steps() {
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 }
