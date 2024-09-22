@@ -68,3 +68,12 @@ body {
   font-size: 14px !important;
   height: 32px !important;
 }
+
+.wallet-adapter-button-trigger {
+  background-color: unset !important;
+}
+
+/* Add this new rule for light mode */
+[data-theme="light"] .wallet-adapter-button {
+  color: #333 !important;
+}

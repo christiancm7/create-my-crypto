@@ -57,7 +57,7 @@ export default function SolanaTokenCreator() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-2 mx-auto max-w-7xl sm:px-6 lg:px-8 py-8">
       <h1 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">
         Solana Token Creator
       </h1>
@@ -69,7 +69,7 @@ export default function SolanaTokenCreator() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
               Token Information
             </h2>
@@ -275,7 +275,7 @@ export default function SolanaTokenCreator() {
                   ].map(({ name, fee, description }) => (
                     <div
                       key={name}
-                      className="flex items-start space-x-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
+                      className="flex items-start space-x-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200 border border-gray-200 dark:border-gray-700"
                       onClick={() => {
                         const currentValue = watch(name as keyof FormData);
                         setValue(name as keyof FormData, !currentValue);
@@ -334,7 +334,7 @@ export default function SolanaTokenCreator() {
         </div>
 
         <div className="space-y-8">
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
               How to use Solana Token Creator
             </h2>
@@ -356,7 +356,7 @@ export default function SolanaTokenCreator() {
             </ol>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">
               Additional Settings
             </h3>
