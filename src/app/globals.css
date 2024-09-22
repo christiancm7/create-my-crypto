@@ -63,3 +63,8 @@ body {
     text-wrap: balance;
   }
 }
+
+.wallet-adapter-button {
+  font-size: 14px !important;
+  height: 32px !important;
+}

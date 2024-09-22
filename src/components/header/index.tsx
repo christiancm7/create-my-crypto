@@ -44,7 +44,7 @@ export function Header() {
   const renderWalletButton = () => {
     if (pathname !== "/ethereum" && pathname !== "/base") {
       return (
-        <WalletMultiButton className="!bg-blue-700 hover:!bg-blue-800 !text-white !font-medium !rounded-lg !text-sm !px-3 !py-2 !text-center dark:!bg-blue-600 dark:hover:!bg-blue-700 md:!w-auto !w-[120px] !overflow-hidden !text-ellipsis !whitespace-nowrap">
+        <WalletMultiButton className="!bg-blue-700 hover:!bg-blue-800 !text-white !font-medium !rounded-lg !text-sm !px-3 !py-2 !text-center dark:!bg-blue-600 dark:hover:!bg-blue-700 md:!w-auto !w-[120px] !h-[32px] !overflow-hidden !text-ellipsis !whitespace-nowrap">
           {solanaConnected && publicKey ? (
             <>
               <span className="md:inline hidden">
@@ -57,8 +57,8 @@ export function Header() {
             </>
           ) : (
             <>
-              <span className="md:inline hidden">Connect SOL</span>
-              <span className="md:hidden">SOL</span>
+              <span className="md:inline hidden">Connect Wallet</span>
+              <span className="md:hidden">Wallet</span>
             </>
           )}
         </WalletMultiButton>
