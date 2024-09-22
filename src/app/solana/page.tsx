@@ -38,7 +38,7 @@ export default function SolanaTokenCreator() {
 
   const onSubmit = (data: FormData) => {
     const file = data.image[0];
-    console.log(data);
+    console.log(file);
     // Handle token creation logic here
   };
 
@@ -278,7 +278,7 @@ export default function SolanaTokenCreator() {
                       className="flex items-start space-x-3 bg-gray-50 dark:bg-gray-700 p-3 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
                       onClick={() => {
                         const currentValue = watch(name as keyof FormData);
-                        setValue(name, !currentValue);
+                        setValue(name as keyof FormData, !currentValue);
                         updateTotalFee(name, !currentValue);
                       }}
                     >
