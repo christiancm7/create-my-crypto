@@ -37,17 +37,29 @@ export function Header() {
 
   if (!mounted) return null;
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen((prevState) => !prevState);
+  };
+
   const renderWalletButton = () => {
     if (pathname !== "/ethereum" && pathname !== "/base") {
       return (
-        <WalletMultiButton className="!bg-blue-700 hover:!bg-blue-800 !text-white !font-medium !rounded-lg !text-sm !px-3 !py-2 !text-center dark:!bg-blue-600 dark:hover:!bg-blue-700">
+        <WalletMultiButton className="!bg-blue-700 hover:!bg-blue-800 !text-white !font-medium !rounded-lg !text-sm !px-3 !py-2 !text-center dark:!bg-blue-600 dark:hover:!bg-blue-700 md:!w-auto !w-[120px] !overflow-hidden !text-ellipsis !whitespace-nowrap">
           {solanaConnected && publicKey ? (
-            <span>
-              {publicKey.toBase58().slice(0, 4)}...
-              {publicKey.toBase58().slice(-4)}
-            </span>
+            <>
+              <span className="md:inline hidden">
+                {publicKey.toBase58().slice(0, 4)}...
+                {publicKey.toBase58().slice(-4)}
+              </span>
+              <span className="md:hidden">
+                {publicKey.toBase58().slice(0, 4)}...
+              </span>
+            </>
           ) : (
-            "Connect SOL"
+            <>
+              <span className="md:inline hidden">Connect SOL</span>
+              <span className="md:hidden">SOL</span>
+            </>
           )}
         </WalletMultiButton>
       );
@@ -152,8 +164,9 @@ export function Header() {
       <div className="flex flex-wrap justify-between items-center">
         <div className="flex justify-start items-center">
           <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onClick={toggleMobileMenu}
             aria-controls="drawer-navigation"
+            aria-expanded={isMobileMenuOpen}
             className="p-2 mr-2 text-gray-600 rounded-lg cursor-pointer md:hidden hover:text-gray-900 hover:bg-gray-100 focus:bg-gray-100 dark:focus:bg-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
           >
             <svg
@@ -174,15 +187,20 @@ export function Header() {
           <a href="/" className="flex items-center justify-between mr-4">
             <Image
               priority
-              src="https://flowbite.s3.amazonaws.com/logo.svg"
+              src="/images/logo-compact.png"
               alt="Flowbite Logo"
-              width={32}
               height={32}
-              className="mr-3"
+              width={32}
+              className="hidden sm:block mr-3"
             />
-            <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
-              Flowbite
-            </span>
+            <Image
+              priority
+              src="/images/logo.png"
+              alt="Flowbite Logo"
+              height={120}
+              width={180}
+              className=" mr-3 filter invert-[0.9] dark:invert-0"
+            />
           </a>
         </div>
         <div className="flex items-center lg:order-2">

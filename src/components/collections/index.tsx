@@ -1,5 +1,7 @@
 import React from "react";
 import Image from "next/image";
+import { useRouter } from "next/router";
+import Link from "next/link";
 
 interface Token {
   name: string;
@@ -12,6 +14,7 @@ interface Blockchain {
   name: string;
   standardToken: Token;
   logo: string;
+  path: string;
 }
 
 const tokenTypes: Blockchain[] = [
@@ -25,6 +28,7 @@ const tokenTypes: Blockchain[] = [
       features: ["spl-token", "metadata", "logo"],
     },
     logo: "/images/solana-logo.svg",
+    path: "/solana",
   },
   {
     name: "Ethereum",
@@ -36,6 +40,7 @@ const tokenTypes: Blockchain[] = [
       features: ["erc-20", "transfer", "allowance"],
     },
     logo: "/images/eth-logo.svg",
+    path: "/ethereum",
   },
   {
     name: "Base",
@@ -47,6 +52,7 @@ const tokenTypes: Blockchain[] = [
       features: ["erc-20", "base-optimized"],
     },
     logo: "/images/base-logo.svg",
+    path: "/base",
   },
 ];
 
@@ -57,60 +63,63 @@ interface TokenCardProps {
   onCreateToken: () => void;
   blockchainName: string;
   logo?: string;
+  path: string;
 }
 
 const TokenCard: React.FC<TokenCardProps> = ({
   token,
-  onCreateToken,
   logo,
   blockchainName,
+  path,
 }) => {
   return (
-    <div
-      onClick={onCreateToken}
-      className="bg-white rounded-lg p-4 flex flex-col shadow-md border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 h-[320px] cursor-pointer transition-all hover:border-blue-600 dark:hover:border-blue-400 hover:shadow-lg dark:hover:shadow-blue-400/20"
-    >
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center">
-          <div className="h-8 w-8 relative mr-2">
-            <Image
-              src={logo as string}
-              alt={`${blockchainName} logo`}
-              layout="fill"
-              objectFit="contain"
-            />
+    <Link href={path}>
+      <div className="bg-white rounded-lg p-4 flex flex-col shadow-md border-2 border-gray-200 dark:border-gray-700 dark:bg-gray-800 h-[320px] cursor-pointer transition-all hover:border-blue-600 dark:hover:border-blue-400 hover:shadow-lg dark:hover:shadow-blue-400/20">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center">
+            <div className="h-8 w-8 relative mr-2">
+              <Image
+                src={logo as string}
+                alt={`${blockchainName} logo`}
+                layout="fill"
+                objectFit="contain"
+              />
+            </div>
+            <h2 className="text-xl font-semibold">{blockchainName}</h2>
           </div>
-          <h2 className="text-xl font-semibold">{blockchainName}</h2>
+          <div className="md:hidden lg:block text-right">
+            <div className="font-bold">{token.price}</div>
+          </div>
         </div>
-        <div className="text-right">
-          <div className="font-bold">{token.price}</div>
+        <h3 className="text-lg font-bold mb-2">{token.name}</h3>
+        <p className="text-lg md:text-sm lg:text-lg mb-2 flex-grow">
+          {token.description}
+        </p>
+        <div className="md:hidden lg:block flex flex-wrap gap-2 mb-4">
+          {token.features.map((feature) => (
+            <span
+              key={feature}
+              className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 text-xs font-semibold px-2 py-1 rounded-full"
+            >
+              {feature}
+            </span>
+          ))}
         </div>
+        <button
+          className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+          onClick={(e) => {
+            e.preventDefault();
+            window.location.href = path;
+          }}
+        >
+          Create token
+        </button>
       </div>
-      <h3 className="text-lg font-bold mb-2">{token.name}</h3>
-      <p className="text-sm mb-2 flex-grow">{token.description}</p>
-      <div className="flex flex-wrap gap-2 mb-4">
-        {token.features.map((feature) => (
-          <span
-            key={feature}
-            className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 text-xs font-semibold px-2 py-1 rounded-full"
-          >
-            {feature}
-          </span>
-        ))}
-      </div>
-      <button className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-        Create token
-      </button>
-    </div>
+    </Link>
   );
 };
 
 const BlockchainTokens: React.FC = () => {
-  const handleCreateToken = (blockchain: string) => {
-    // Implement the token creation logic here
-    console.log(`Creating token for ${blockchain}`);
-  };
-
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid md:grid-cols-3 gap-8">
@@ -120,9 +129,10 @@ const BlockchainTokens: React.FC = () => {
             token={blockchain.standardToken}
             type="standard"
             isPopular={true}
-            onCreateToken={() => handleCreateToken(blockchain.name)}
+            onCreateToken={() => {}} // Remove this prop if not needed
             logo={blockchain.logo}
             blockchainName={blockchain.name}
+            path={blockchain.path}
           />
         ))}
       </div>

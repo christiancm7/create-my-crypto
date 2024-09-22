@@ -7,20 +7,20 @@ export default function Home() {
   return (
     <div>
       <main>
-        <section className="bg-white dark:bg-gray-900">
-          <div className="grid max-w-screen-xl px-4 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12">
+        <section className=" bg-white dark:bg-gray-900">
+          <div className="mt-6 sm:mt-0 h-3/5 md:h-auto grid max-w-screen-xl px-4 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12">
             <div className="mr-auto place-self-center lg:col-span-7">
-              <h1 className="max-w-2xl mb-4 text-4xl font-extrabold tracking-tight leading-none md:text-5xl xl:text-6xl dark:text-white">
+              <h1 className="px-1  max-w-2xl mb-4 text-4xl font-extrabold tracking-tight leading-none md:text-5xl xl:text-6xl dark:text-white">
                 Create your crypto token with no code
               </h1>
-              <p className="max-w-2xl mb-6 font-light text-gray-500 lg:mb-8 md:text-lg lg:text-xl dark:text-gray-400">
+              <p className="p-4 text-lg max-w-2xl mb-6 font-light text-gray-500 lg:mb-8 md:text-lg lg:text-xl dark:text-gray-400">
                 From concept to launch, creators and entrepreneurs worldwide use
                 our platform to effortlessly create and deploy custom crypto
                 tokens without any coding knowledge.
               </p>
               <a
                 href="#"
-                className="inline-flex items-center justify-center px-5 py-3 mr-3 text-base font-medium text-center  rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 text-gray-800 dark:text-white dark:focus:ring-primary-900"
+                className="hidden sm:inline-flex items-center justify-center px-5 py-3 mr-3 text-base font-medium text-center  rounded-lg bg-primary-700 hover:bg-primary-800 focus:ring-4 focus:ring-primary-300 text-gray-800 dark:text-white dark:focus:ring-primary-900"
               >
                 Get started
                 <svg
@@ -38,7 +38,7 @@ export default function Home() {
               </a>
               <a
                 href="/solana"
-                className="inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-gray-800"
+                className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 text-base font-medium text-center text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-gray-800"
               >
                 Create Solana Token
               </a>
@@ -54,10 +54,10 @@ export default function Home() {
           </div>
         </section>
         <div className="relative">
-          <div className="relative mx-auto max-w-3xl px-4 pb-96 text-center sm:px-6 sm:pb-0 lg:px-8">
-            <div className="relative pb-10 pt-8">
+          <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6 sm:pb-0 lg:px-8">
+            <div className="relative pb-2">
               <p className="mt-4 text-xl sm:text-2xl md:text-3xl text-gray-600 dark:text-gray-300">
-                Supported Networks
+                Pick a template
               </p>
             </div>
           </div>
