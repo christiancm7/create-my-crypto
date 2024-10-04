@@ -259,14 +259,71 @@ export default function SolanaTokenCreator() {
       {isPending && (
         <p className="text-center text-blue-500 mb-4">Creating token...</p>
       )}
+
       {isSuccess && transactionSignatures && (
-        <div className="text-center text-green-500 mb-4">
-          <p>Token created successfully!</p>
-          <p>Mint Address: {mintAddress}</p>
-          <p>Fee Transaction Signature: {transactionSignatures.feeSignature}</p>
-          <p>
-            Mint Transaction Signature: {transactionSignatures.mintSignature}
-          </p>
+        <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700 mb-8">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
+            Token Created Successfully!
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                Mint Address:
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 break-all">
+                {mintAddress}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                Fee Transaction Signature:
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 break-all">
+                {transactionSignatures.feeSignature}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                Mint Transaction Signature:
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 break-all">
+                {transactionSignatures.mintSignature}
+              </p>
+            </div>
+          </div>
+          <div className="mt-6">
+            <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
+              Next Steps:
+            </h3>
+            <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-gray-300">
+              <li>
+                Copy the Mint Address above. You&pos;ll need this to create an
+                OpenBook market.
+              </li>
+              <li>
+                Visit the OpenBook market creation interface (link to be
+                provided).
+              </li>
+              <li>Connect your wallet on the OpenBook interface.</li>
+              <li>
+                Paste your token&apos;s Mint Address in the appropriate field.
+              </li>
+              <li>
+                Set your desired market parameters (e.g., lot size, tick size).
+              </li>
+              <li>
+                Follow the OpenBook interface instructions to complete market
+                creation.
+              </li>
+            </ol>
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Note: Creating an OpenBook market may require additional SOL for
+              transaction fees. Ensure your wallet has sufficient balance before
+              proceeding.
+            </p>
+          </div>
         </div>
       )}
 
