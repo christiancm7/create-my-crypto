@@ -23,7 +23,7 @@ import { clusterApiUrl } from "@solana/web3.js";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 const config = getDefaultConfig({
-  appName: "Your App Name",
+  appName: "Create My Crypto",
   projectId: "dcd1fdec761d64ad3aefca904a32d776",
   chains: [mainnet, base],
 });
@@ -31,8 +31,8 @@ const config = getDefaultConfig({
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // You can choose the Solana network here
-  const network = WalletAdapterNetwork.Mainnet;
+  // Use devnet for Solana
+  const network = WalletAdapterNetwork.Devnet;
 
   // You can add more wallet adapters here
   const wallets = useMemo(
@@ -44,8 +44,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     [network]
   );
 
-  // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'
-  const endpoint = useMemo(() => clusterApiUrl(network), [network]);
+  // Use the RPC URL from environment variables, falling back to clusterApiUrl if not set
+  const endpoint = useMemo(
+    () => process.env.NEXT_PUBLIC_RPC_URL || clusterApiUrl(network),
+    [network]
+  );
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
