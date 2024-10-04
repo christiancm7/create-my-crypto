@@ -4,7 +4,6 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
-  Connection,
 } from "@solana/web3.js";
 import {
   AuthorityType,
@@ -21,7 +20,6 @@ import {
   createCreateMetadataAccountV3Instruction,
   PROGRAM_ID,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { useState } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 
 interface TokenInfo {
