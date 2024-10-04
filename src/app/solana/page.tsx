@@ -1,7 +1,26 @@
 "use client";
-import React, { useState, useCallback } from "react";
+
+import React, { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import Image from "next/image";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
+import {
+  PublicKey,
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+  Keypair,
+  Connection,
+  clusterApiUrl,
+} from "@solana/web3.js";
+import {
+  TOKEN_PROGRAM_ID,
+  createInitializeMintInstruction,
+  createAssociatedTokenAccountInstruction,
+  createMintToInstruction,
+  getAssociatedTokenAddress,
+} from "@solana/spl-token";
 
 interface FormData {
   name: string;
@@ -10,13 +29,12 @@ interface FormData {
   supply: number;
   image: FileList;
   description: string;
-  tags: string;
   immutable: boolean;
   revokeMint: boolean;
   revokeFreeze: boolean;
-  customCreatorInfo: boolean;
-  createTokenPage: boolean;
 }
+
+const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_URL || clusterApiUrl('devnet');
 
 export default function SolanaTokenCreator() {
   const {
@@ -27,19 +45,173 @@ export default function SolanaTokenCreator() {
     setValue,
   } = useForm<FormData>();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [totalFee, setTotalFee] = useState(0.1); // Initialize with base fee
+  const [totalFee, setTotalFee] = useState(0.1);
+  const [isPending, setIsPending] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [transactionSignatures, setTransactionSignatures] = useState<{
+    feeSignature: string;
+    mintSignature: string;
+  } | null>(null);
+  const [mintAddress, setMintAddress] = useState<string | null>(null);
+
+  const wallet = useWallet();
+  const [connection, setConnection] = useState<Connection | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+  const [feeRecipient, setFeeRecipient] = useState<PublicKey | null>(null);
+  const [showNotification, setShowNotification] = useState(false);
+
+  useEffect(() => {
+    const newConnection = new Connection(RPC_ENDPOINT, 'confirmed');
+    setConnection(newConnection);
+  }, []);
+
+  useEffect(() => {
+    const feeWalletAddress = process.env.NEXT_PUBLIC_FEE_WALLET_ADDRESS;
+    if (feeWalletAddress) {
+      try {
+        const pubKey = new PublicKey(feeWalletAddress);
+        setFeeRecipient(pubKey);
+      } catch (err) {
+        console.error("Invalid fee wallet address:", err);
+        setError("Invalid configuration. Please contact support.");
+      }
+    } else {
+      setError("Missing fee wallet configuration. Please contact support.");
+    }
+  }, []);
 
   const updateTotalFee = useCallback((name: string, isChecked: boolean) => {
     setTotalFee((prevFee) => {
-      const fee = 0.1; // Fee for each additional setting
+      const fee = 0.1;
       return isChecked ? prevFee + fee : prevFee - fee;
     });
   }, []);
 
-  const onSubmit = (data: FormData) => {
-    const file = data.image[0];
-    console.log(file);
-    // Handle token creation logic here
+  const onSubmit = async (data: FormData) => {
+    if (!wallet.connected) {
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000);
+      return;
+    }
+
+    if (!wallet.publicKey || !wallet.signTransaction) {
+      throw new WalletNotConnectedError();
+    }
+
+    if (!feeRecipient) {
+      setError("Fee recipient not configured. Please contact support.");
+      return;
+    }
+
+    if (!connection) {
+      setError("RPC connection not established. Please try again later.");
+      return;
+    }
+
+    setIsPending(true);
+    setIsSuccess(false);
+    setTransactionSignatures(null);
+    setMintAddress(null);
+    setError(null);
+
+    try {
+      const feeTransaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: wallet.publicKey,
+          toPubkey: feeRecipient,
+          lamports: totalFee * LAMPORTS_PER_SOL,
+        })
+      );
+
+      const mintKeypair = Keypair.generate();
+      const mintRent = await connection.getMinimumBalanceForRentExemption(82);
+
+      const createMintAccountIx = SystemProgram.createAccount({
+        fromPubkey: wallet.publicKey,
+        newAccountPubkey: mintKeypair.publicKey,
+        lamports: mintRent,
+        space: 82,
+        programId: TOKEN_PROGRAM_ID,
+      });
+
+      const initializeMintIx = createInitializeMintInstruction(
+        mintKeypair.publicKey,
+        data.decimals,
+        wallet.publicKey,
+        data.revokeFreeze ? null : wallet.publicKey,
+        TOKEN_PROGRAM_ID
+      );
+
+      const userTokenAddress = await getAssociatedTokenAddress(
+        mintKeypair.publicKey,
+        wallet.publicKey
+      );
+
+      const createATAIx = createAssociatedTokenAccountInstruction(
+        wallet.publicKey,
+        userTokenAddress,
+        wallet.publicKey,
+        mintKeypair.publicKey
+      );
+
+      const mintToIx = createMintToInstruction(
+        mintKeypair.publicKey,
+        userTokenAddress,
+        wallet.publicKey,
+        data.supply
+      );
+
+      const mintTransaction = new Transaction().add(
+        createMintAccountIx,
+        initializeMintIx,
+        createATAIx,
+        mintToIx
+      );
+
+      const recentBlockhash = await connection.getLatestBlockhash();
+      feeTransaction.recentBlockhash = recentBlockhash.blockhash;
+      feeTransaction.feePayer = wallet.publicKey;
+      mintTransaction.recentBlockhash = recentBlockhash.blockhash;
+      mintTransaction.feePayer = wallet.publicKey;
+
+      const signedFeeTransaction = await wallet.signTransaction(feeTransaction);
+      const signedMintTransaction = await wallet.signTransaction(
+        mintTransaction
+      );
+
+      signedMintTransaction.partialSign(mintKeypair);
+
+      const feeSignature = await connection.sendRawTransaction(
+        signedFeeTransaction.serialize()
+      );
+      const mintSignature = await connection.sendRawTransaction(
+        signedMintTransaction.serialize()
+      );
+
+      await connection.confirmTransaction(feeSignature);
+      await connection.confirmTransaction(mintSignature);
+
+      setTransactionSignatures({
+        feeSignature,
+        mintSignature,
+      });
+      setMintAddress(mintKeypair.publicKey.toString());
+      setIsSuccess(true);
+    } catch (error: unknown) {
+      console.error("Token creation failed:", error);
+      if (error instanceof Error) {
+        if (error.message.includes("403")) {
+          setError("RPC access forbidden. Please check your RPC configuration or try again later.");
+        } else {
+          setError(error.message);
+        }
+      } else {
+        setError("An unknown error occurred during token creation");
+      }
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleImageChange = useCallback(
@@ -67,6 +239,28 @@ export default function SolanaTokenCreator() {
         minutes.
       </p>
 
+      {isPending && (
+        <p className="text-center text-blue-500 mb-4">Creating token...</p>
+      )}
+      {isSuccess && transactionSignatures && (
+        <div className="text-center text-green-500 mb-4">
+          <p>Token created successfully!</p>
+          <p>Mint Address: {mintAddress}</p>
+          <p>Fee Transaction Signature: {transactionSignatures.feeSignature}</p>
+          <p>
+            Mint Transaction Signature: {transactionSignatures.mintSignature}
+          </p>
+        </div>
+      )}
+
+      {error && <p className="text-center text-red-500 mb-4">{error}</p>}
+
+      {showNotification && (
+        <div className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
+          Please connect your wallet to create a token.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
@@ -74,6 +268,7 @@ export default function SolanaTokenCreator() {
               Token Information
             </h2>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              {/* Token Name */}
               <div>
                 <label
                   htmlFor="name"
@@ -89,7 +284,7 @@ export default function SolanaTokenCreator() {
                     maxLength: 30,
                   })}
                   placeholder="My new token"
-                  className="mt-1block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
+                  className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
                 />
                 {errors.name && (
                   <p className="text-red-500 text-xs italic">
@@ -98,14 +293,15 @@ export default function SolanaTokenCreator() {
                 )}
               </div>
 
+              {/* Token Symbol and Decimals */}
               <div className="grid grid-cols-2 gap-4">
+                {/* Symbol */}
                 <div>
                   <label
                     htmlFor="symbol"
                     className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >
-                    Token Symbol{" "}
-                    <span className="hidden sm:inline">(Max 10)</span>*
+                    Token Symbol (Max 10)*
                   </label>
                   <input
                     id="symbol"
@@ -124,6 +320,7 @@ export default function SolanaTokenCreator() {
                   )}
                 </div>
 
+                {/* Decimals */}
                 <div>
                   <label
                     htmlFor="decimals"
@@ -150,6 +347,7 @@ export default function SolanaTokenCreator() {
                 </div>
               </div>
 
+              {/* Supply */}
               <div>
                 <label
                   htmlFor="supply"
@@ -175,6 +373,7 @@ export default function SolanaTokenCreator() {
                 )}
               </div>
 
+              {/* Image Upload */}
               <div className="col-span-full">
                 <label
                   htmlFor="image"
@@ -209,7 +408,7 @@ export default function SolanaTokenCreator() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth="2"
-                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2"
                           />
                         </svg>
                         <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
@@ -232,6 +431,7 @@ export default function SolanaTokenCreator() {
                 </div>
               </div>
 
+              {/* Description */}
               <div>
                 <label
                   htmlFor="description"
@@ -248,6 +448,7 @@ export default function SolanaTokenCreator() {
                 ></textarea>
               </div>
 
+              {/* Additional Settings */}
               <div className="mt-8">
                 <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                   Additional settings
@@ -320,11 +521,13 @@ export default function SolanaTokenCreator() {
                 </div>
               </div>
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200"
+                disabled={isPending}
               >
-                Create token
+                {isPending ? "Creating token..." : "Create token"}
               </button>
               <p className="text-center text-sm text-gray-500 dark:text-gray-400">
                 Service fee: {totalFee.toFixed(1)} SOL
@@ -333,6 +536,7 @@ export default function SolanaTokenCreator() {
           </div>
         </div>
 
+        {/* Additional Information */}
         <div className="space-y-8">
           <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">

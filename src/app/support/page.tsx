@@ -132,15 +132,6 @@ const CustomerSupportPage = () => {
         </div>
       </div>
 
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Not what you were looking for?
-        </h2>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
-          Browse Help Center
-        </button>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
