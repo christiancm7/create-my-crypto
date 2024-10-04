@@ -5,7 +5,7 @@ import { Sidebar } from "../components/sidebar";
 import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-
+import { Analytics } from "@vercel/analytics/react";
 export default function RootLayout({
   children,
 }: {
@@ -21,6 +21,7 @@ export default function RootLayout({
               <Sidebar />
               <main className="px-0 py-4 sm:px-4 md:ml-56 h-auto pt-20">
                 {children}
+                <Analytics />
               </main>
             </div>
             <SpeedInsights />
