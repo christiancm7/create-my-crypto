@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import Image from "next/image";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletNotConnectedError } from "@solana/wallet-adapter-base";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import {
   PublicKey,
   Transaction,
@@ -13,6 +13,7 @@ import {
   Keypair,
   Connection,
   clusterApiUrl,
+  SendTransactionError,
 } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
@@ -34,7 +35,7 @@ interface FormData {
   revokeFreeze: boolean;
 }
 
-const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_URL || clusterApiUrl('devnet');
+const RPC_ENDPOINT = process.env.NEXT_PUBLIC_RPC_URL || clusterApiUrl("devnet");
 
 export default function SolanaTokenCreator() {
   const {
@@ -59,10 +60,9 @@ export default function SolanaTokenCreator() {
 
   const [error, setError] = useState<string | null>(null);
   const [feeRecipient, setFeeRecipient] = useState<PublicKey | null>(null);
-  const [showNotification, setShowNotification] = useState(false);
 
   useEffect(() => {
-    const newConnection = new Connection(RPC_ENDPOINT, 'confirmed');
+    const newConnection = new Connection(RPC_ENDPOINT, "confirmed");
     setConnection(newConnection);
   }, []);
 
@@ -89,14 +89,9 @@ export default function SolanaTokenCreator() {
   }, []);
 
   const onSubmit = async (data: FormData) => {
-    if (!wallet.connected) {
-      setShowNotification(true);
-      setTimeout(() => setShowNotification(false), 3000);
+    if (!wallet.connected || !wallet.publicKey) {
+      setError("Please connect your wallet to create a token.");
       return;
-    }
-
-    if (!wallet.publicKey || !wallet.signTransaction) {
-      throw new WalletNotConnectedError();
     }
 
     if (!feeRecipient) {
@@ -116,6 +111,19 @@ export default function SolanaTokenCreator() {
     setError(null);
 
     try {
+      // Check account balance
+      const balance = await connection.getBalance(wallet.publicKey);
+      const requiredBalance = (totalFee + 0.01) * LAMPORTS_PER_SOL; // 0.01 SOL buffer for transaction fees
+      if (balance < requiredBalance) {
+        setError(
+          `Insufficient balance. You need at least ${(
+            requiredBalance / LAMPORTS_PER_SOL
+          ).toFixed(2)} SOL to create this token.`
+        );
+        setIsPending(false);
+        return;
+      }
+
       const feeTransaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: wallet.publicKey,
@@ -182,15 +190,28 @@ export default function SolanaTokenCreator() {
 
       signedMintTransaction.partialSign(mintKeypair);
 
-      const feeSignature = await connection.sendRawTransaction(
-        signedFeeTransaction.serialize()
-      );
-      const mintSignature = await connection.sendRawTransaction(
-        signedMintTransaction.serialize()
-      );
+      let feeSignature, mintSignature;
+      try {
+        feeSignature = await connection.sendRawTransaction(
+          signedFeeTransaction.serialize()
+        );
+        mintSignature = await connection.sendRawTransaction(
+          signedMintTransaction.serialize()
+        );
 
-      await connection.confirmTransaction(feeSignature);
-      await connection.confirmTransaction(mintSignature);
+        await connection.confirmTransaction(feeSignature);
+        await connection.confirmTransaction(mintSignature);
+      } catch (sendError) {
+        if (sendError instanceof SendTransactionError) {
+          console.error("Transaction error logs:", sendError.logs);
+          setError(`Failed to send transaction. Error: ${sendError.message}`);
+        } else {
+          console.error("Error sending transaction:", sendError);
+          setError("Failed to send transaction. Please try again later.");
+        }
+        setIsPending(false);
+        return;
+      }
 
       setTransactionSignatures({
         feeSignature,
@@ -201,11 +222,7 @@ export default function SolanaTokenCreator() {
     } catch (error: unknown) {
       console.error("Token creation failed:", error);
       if (error instanceof Error) {
-        if (error.message.includes("403")) {
-          setError("RPC access forbidden. Please check your RPC configuration or try again later.");
-        } else {
-          setError(error.message);
-        }
+        setError(`An error occurred: ${error.message}`);
       } else {
         setError("An unknown error occurred during token creation");
       }
@@ -254,12 +271,6 @@ export default function SolanaTokenCreator() {
       )}
 
       {error && <p className="text-center text-red-500 mb-4">{error}</p>}
-
-      {showNotification && (
-        <div className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
-          Please connect your wallet to create a token.
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
@@ -521,14 +532,22 @@ export default function SolanaTokenCreator() {
                 </div>
               </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200"
-                disabled={isPending}
-              >
-                {isPending ? "Creating token..." : "Create token"}
-              </button>
+              {/* Dynamic Submit/Connect Button */}
+              {wallet.connected ? (
+                <button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200"
+                  disabled={isPending}
+                >
+                  {isPending ? "Creating token..." : "Create token"}
+                </button>
+              ) : (
+                <div className="flex justify-center items-center">
+                  <WalletMultiButton className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors duration-200">
+                    Connect Wallet
+                  </WalletMultiButton>
+                </div>
+              )}
               <p className="text-center text-sm text-gray-500 dark:text-gray-400">
                 Service fee: {totalFee.toFixed(1)} SOL
               </p>
