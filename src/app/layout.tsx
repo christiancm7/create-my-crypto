@@ -6,6 +6,7 @@ import "./globals.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import { Toaster } from "react-hot-toast";
 export default function RootLayout({
   children,
 }: {
@@ -27,6 +28,7 @@ export default function RootLayout({
             <SpeedInsights />
           </ThemeWrapper>
         </Providers>
+        <Toaster />
       </body>
     </html>
   );
