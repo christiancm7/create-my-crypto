@@ -5,12 +5,12 @@ const faqs = [
   {
     question: "What is a token creator?",
     answer:
-      "A token creator is a tool that allows you to create your own cryptocurrency tokens on a blockchain network, such as Ethereum or Base, without needing to write complex smart contract code yourself.",
+      "A token creator is a tool that allows you to create your own cryptocurrency tokens on blockchain networks such as Solana, Ethereum, or Base, without needing to write complex smart contract code yourself.",
   },
   {
     question: "How much does it cost to create a token?",
     answer:
-      "The token creation currently costs 0.01 ETH, which covers all fees necessary for Token Creation on the chosen network (Ethereum or Base mainnet).",
+      "The token creation cost varies by network. It costs 0.1 SOL on Solana, and 0.01 ETH on Ethereum or Base mainnet. These fees cover all necessary costs for token creation on the chosen network.",
   },
   {
     question: "How long does the token creation process take?",
@@ -25,13 +25,13 @@ const faqs = [
   {
     question: "Can I create tokens on different networks?",
     answer:
-      "Yes, our platform supports token creation on both Ethereum and Base networks. You can choose the network that best suits your needs.",
+      "Yes, our platform supports token creation on Solana, Ethereum, and Base networks. You can choose the network that best suits your needs.",
   },
   {
     question:
-      "What's the difference between Ethereum and Base for token creation?",
+      "What's the difference between Solana, Ethereum, and Base for token creation?",
     answer:
-      "Ethereum is the original and most widely used network for token creation, while Base is a newer, more scalable network. Base typically offers lower transaction fees and faster confirmation times.",
+      "Solana is known for its high speed and low transaction costs, making it ideal for many token projects. Ethereum is the original and most widely used network for token creation, offering robust security and a large ecosystem. Base is a newer, more scalable network that typically offers lower transaction fees and faster confirmation times compared to Ethereum.",
   },
   {
     question: "Do I need technical knowledge to create a token?",

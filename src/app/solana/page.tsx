@@ -32,6 +32,7 @@ import {
 } from "@metaplex-foundation/mpl-token-metadata";
 import { ClipboardIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-hot-toast";
+import { ChangeEvent } from "react";
 
 interface FormData {
   name: string;
@@ -393,6 +394,12 @@ export default function SolanaTokenCreator() {
       });
   };
 
+  // Add this function to handle input changes
+  const handleNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value.slice(0, 30);
+    setValue("name", value);
+  };
+
   return (
     <div className="px-2 mx-auto max-w-7xl sm:px-6 lg:px-8 py-8">
       <h1 className="text-4xl font-bold text-center mb-4 text-gray-900 dark:text-white">
@@ -534,8 +541,12 @@ export default function SolanaTokenCreator() {
                   type="text"
                   {...register("name", {
                     required: "Token name is required",
-                    maxLength: 30,
+                    maxLength: {
+                      value: 30,
+                      message: "Token name must be 30 characters or less",
+                    },
                   })}
+                  onChange={handleNameChange}
                   placeholder="My new token"
                   className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
                 />
@@ -561,8 +572,15 @@ export default function SolanaTokenCreator() {
                     type="text"
                     {...register("symbol", {
                       required: "Token symbol is required",
-                      maxLength: 10,
+                      maxLength: {
+                        value: 10,
+                        message: "Symbol must be 10 characters or less",
+                      },
                     })}
+                    onChange={(e) => {
+                      const value = e.target.value.slice(0, 8);
+                      setValue("symbol", value);
+                    }}
                     placeholder="SOL"
                     className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
                   />
@@ -584,11 +602,24 @@ export default function SolanaTokenCreator() {
                   <input
                     id="decimals"
                     type="number"
+                    min="0"
+                    max="9"
                     {...register("decimals", {
                       required: "Decimals are required",
-                      min: 0,
-                      max: 9,
+                      min: {
+                        value: 0,
+                        message: "Decimals must be at least 0"
+                      },
+                      max: {
+                        value: 9,
+                        message: "Decimals cannot exceed 9"
+                      },
+                      valueAsNumber: true
                     })}
+                    onInput={(e) => {
+                      const target = e.target as HTMLInputElement;
+                      target.value = Math.max(0, Math.min(9, Number(target.value))).toString();
+                    }}
                     placeholder="9"
                     className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
                   />
@@ -611,7 +642,20 @@ export default function SolanaTokenCreator() {
                 <input
                   id="supply"
                   type="number"
-                  {...register("supply", { required: "Supply is required" })}
+                  {...register("supply", { 
+                    required: "Supply is required",
+                    min: {
+                      value: 1,
+                      message: "Supply must be at least 1"
+                    },
+                    valueAsNumber: true
+                  })}
+                  min="1"
+                  step="1"
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    target.value = Math.max(0, parseInt(target.value) || 0).toString();
+                  }}
                   placeholder="1000000000"
                   className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
                 />
@@ -804,7 +848,65 @@ export default function SolanaTokenCreator() {
 
         {/* Additional Information */}
         <div className="space-y-8">
-          {/* ... (rest of your component remains unchanged) */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
+              How to use Solana Token Creator
+            </h2>
+            <ol className="list-decimal list-inside space-y-3 text-gray-700 dark:text-gray-300">
+              <li>Connect your Solana wallet</li>
+              <li>Specify the desired name for your Token</li>
+              <li>Indicate the symbol (max 8 characters)</li>
+              <li>
+                Select the decimals quantity (0 for Whitelist Token, 5 for
+                utility Token, 9 for meme token).
+              </li>
+              <li>Provide a brief description for your SPL Token</li>
+              <li>Upload the image for your token (PNG)</li>
+              <li>Determine the Supply of your Token</li>
+              <li>
+                Click on create, accept the transaction and wait until your
+                tokens are ready
+              </li>
+            </ol>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+            <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">
+              Additional Settings
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-lg font-medium mb-2 text-gray-600 dark:text-gray-400">
+                  Revoke Update Authority (Immutable)
+                </h4>
+                <p className="text-gray-700 dark:text-gray-300">
+                  Revoking update authority makes the token metadata immutable.
+                  This means the token&apos;s information cannot be changed
+                  after creation. The cost is 0.1 SOL.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-lg font-medium mb-2 text-gray-600 dark:text-gray-400">
+                  Revoke Freeze Authority
+                </h4>
+                <p className="text-gray-700 dark:text-gray-300">
+                  If you want to create a liquidity pool, you&apos;ll need to
+                  &quot;Revoke Freeze Authority&quot; of the Token. The cost is
+                  0.1 SOL.
+                </p>
+              </div>
+              <div>
+                <h4 className="text-lg font-medium mb-2 text-gray-600 dark:text-gray-400">
+                  Revoke Mint Authority
+                </h4>
+                <p className="text-gray-700 dark:text-gray-300">
+                  Revoking mint authority ensures that no more tokens can be
+                  minted beyond the total supply. This provides security and
+                  peace of mind to buyers. The cost is 0.1 SOL.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

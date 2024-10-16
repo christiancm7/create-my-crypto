@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CogIcon, LifebuoyIcon } from "@heroicons/react/24/outline";
+import { LifebuoyIcon } from "@heroicons/react/24/outline";
 import { Home } from "lucide-react";
 
 export function Sidebar() {
@@ -182,7 +182,7 @@ export function Sidebar() {
         </ul>
 
         <ul className="space-y-2 font-medium pt-4 border-t border-gray-200 dark:border-gray-700">
-          <li>
+          {/* <li>
             <Link
               href="/settings"
               className={`flex items-center p-2 rounded-lg group ${
@@ -194,7 +194,7 @@ export function Sidebar() {
               <CogIcon className="w-5 h-5 transition duration-75 text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" />
               <span className="ml-3">Settings</span>
             </Link>
-          </li>
+          </li> */}
           <li>
             <Link
               href="/support"
