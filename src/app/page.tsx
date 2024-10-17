@@ -1,11 +1,55 @@
+/* eslint-disable @next/next/next-script-for-ga */
 "use client";
 import Faq from "../components/faq";
 import Collections from "../components/collections";
 import Image from "next/image";
+import Head from "next/head";
 
 export default function Home() {
   return (
     <div>
+      <Head>
+        <link rel="icon" href="/favicon.ico" />
+        <link
+          rel="apple-touch-icon"
+          sizes="180x180"
+          href="/apple-touch-icon.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="/favicon-32x32.png"
+        />
+        <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/favicon-16x16.png"
+        />
+        <meta
+          name="description"
+          content="Create your own crypto currency on Solana"
+        />
+        <title>Create My Crypto</title>
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=AW-16523832540"
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', '${process.env.NEXT_PUBLIC_ANALYTICS_ID}', {
+              page_path: window.location.pathname,
+            });
+          `,
+          }}
+        />
+      </Head>
       <main>
         <section className=" bg-white dark:bg-gray-900">
           <div className="mt-6 sm:mt-0 h-3/5 md:h-auto grid max-w-screen-xl px-4 py-8 mx-auto lg:gap-8 xl:gap-0 lg:py-16 lg:grid-cols-12">
