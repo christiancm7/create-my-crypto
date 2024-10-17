@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/next-script-for-ga */
 import { Header } from "../components/header";
 import { Providers } from "../components/providers";
 import { ThemeWrapper } from "../components/providers/themeProvider";
@@ -39,6 +40,23 @@ export default function RootLayout({
           content="Create your own crypto currency on Solana"
         />
         <title>Create My Crypto</title>
+        <script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=AW-16523832540"
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', '${process.env.NEXT_PUBLIC_ANALYTICS_ID}', {
+              page_path: window.location.pathname,
+            });
+          `,
+          }}
+        />
       </Head>
       <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
         <Providers>
