@@ -77,6 +77,8 @@ export default function SolanaTokenCreator() {
     setConnection(newConnection);
   }, []);
 
+  console.log("connection:", connection);
+
   useEffect(() => {
     const feeWalletAddress = process.env.NEXT_PUBLIC_FEE_WALLET_ADDRESS;
     if (feeWalletAddress) {
@@ -185,6 +187,8 @@ export default function SolanaTokenCreator() {
           lamports: totalFee * LAMPORTS_PER_SOL,
         })
       );
+
+      console.log("Fee transaction:", feeTransaction);
 
       const mintKeypair = Keypair.generate();
       console.log("Mint keypair public key:", mintKeypair.publicKey.toString());
@@ -296,10 +300,21 @@ export default function SolanaTokenCreator() {
       mintTransaction.recentBlockhash = recentBlockhash.blockhash;
       mintTransaction.feePayer = wallet.publicKey;
 
-      const signedFeeTransaction = await wallet.signTransaction(feeTransaction);
-      const signedMintTransaction = await wallet.signTransaction(
-        mintTransaction
-      );
+      // Check if wallet is connected before signing
+      if (!wallet.signTransaction) {
+        throw new Error("Wallet does not support transaction signing");
+      }
+
+      let signedFeeTransaction, signedMintTransaction;
+      try {
+        signedFeeTransaction = await wallet.signTransaction(feeTransaction);
+        signedMintTransaction = await wallet.signTransaction(mintTransaction);
+      } catch (signError) {
+        console.error("Error signing transaction:", signError);
+        throw new Error(
+          "Failed to sign transaction. Please check your wallet connection and try again."
+        );
+      }
 
       signedMintTransaction.partialSign(mintKeypair);
 
@@ -608,17 +623,20 @@ export default function SolanaTokenCreator() {
                       required: "Decimals are required",
                       min: {
                         value: 0,
-                        message: "Decimals must be at least 0"
+                        message: "Decimals must be at least 0",
                       },
                       max: {
                         value: 9,
-                        message: "Decimals cannot exceed 9"
+                        message: "Decimals cannot exceed 9",
                       },
-                      valueAsNumber: true
+                      valueAsNumber: true,
                     })}
                     onInput={(e) => {
                       const target = e.target as HTMLInputElement;
-                      target.value = Math.max(0, Math.min(9, Number(target.value))).toString();
+                      target.value = Math.max(
+                        0,
+                        Math.min(9, Number(target.value))
+                      ).toString();
                     }}
                     placeholder="9"
                     className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
@@ -642,19 +660,22 @@ export default function SolanaTokenCreator() {
                 <input
                   id="supply"
                   type="number"
-                  {...register("supply", { 
+                  {...register("supply", {
                     required: "Supply is required",
                     min: {
                       value: 1,
-                      message: "Supply must be at least 1"
+                      message: "Supply must be at least 1",
                     },
-                    valueAsNumber: true
+                    valueAsNumber: true,
                   })}
                   min="1"
                   step="1"
                   onInput={(e) => {
                     const target = e.target as HTMLInputElement;
-                    target.value = Math.max(0, parseInt(target.value) || 0).toString();
+                    target.value = Math.max(
+                      0,
+                      parseInt(target.value) || 0
+                    ).toString();
                   }}
                   placeholder="1000000000"
                   className="mt-1 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 dark:bg-gray-700 dark:text-white dark:ring-gray-600 dark:placeholder:text-gray-500 dark:focus:ring-indigo-500"
