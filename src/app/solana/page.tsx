@@ -39,7 +39,7 @@ interface FormData {
   symbol: string;
   decimals: number;
   supply: number;
-  image: FileList;
+  image?: FileList;
   description: string;
   immutable: boolean;
   revokeMint: boolean;
@@ -57,7 +57,7 @@ export default function SolanaTokenCreator() {
     setValue,
   } = useForm<FormData>();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [totalFee, setTotalFee] = useState(0.1);
+  const [totalFee, setTotalFee] = useState(0.5);
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [transactionSignatures, setTransactionSignatures] = useState<{
@@ -76,8 +76,6 @@ export default function SolanaTokenCreator() {
     const newConnection = new Connection(RPC_ENDPOINT, "confirmed");
     setConnection(newConnection);
   }, []);
-
-  console.log("connection:", connection);
 
   useEffect(() => {
     const feeWalletAddress = process.env.NEXT_PUBLIC_FEE_WALLET_ADDRESS;
@@ -102,7 +100,7 @@ export default function SolanaTokenCreator() {
 
   // Register the image field with react-hook-form
   useEffect(() => {
-    register("image", { required: "Image is required" });
+    register("image"); // Remove the required validation
   }, [register]);
 
   const updateTotalFee = useCallback((name: string, isChecked: boolean) => {
@@ -115,16 +113,19 @@ export default function SolanaTokenCreator() {
   const onSubmit = async (data: FormData) => {
     if (!wallet.connected || !wallet.publicKey) {
       setError("Please connect your wallet to create a token.");
+      toast.error("Please connect your wallet to create a token.");
       return;
     }
 
     if (!feeRecipient) {
       setError("Fee recipient not configured. Please contact support.");
+      toast.error("Fee recipient not configured. Please contact support.");
       return;
     }
 
     if (!connection) {
       setError("RPC connection not established. Please try again later.");
+      toast.error("RPC connection not established. Please try again later.");
       return;
     }
 
@@ -135,22 +136,22 @@ export default function SolanaTokenCreator() {
     setError(null);
 
     try {
-      console.log("Starting token creation process...");
-      console.log("Wallet public key:", wallet.publicKey.toString());
-
       // Prepare form data to send to API route
       const imageFile = data.image?.[0];
-      if (!imageFile) {
-        setError("Image is required. Please upload an image.");
-        setIsPending(false);
-        return;
-      }
+      // Remove the image requirement check
+      // if (!imageFile) {
+      //   setError("Image is required. Please upload an image.");
+      //   setIsPending(false);
+      //   return;
+      // }
 
       const formData = new FormData();
       formData.append("name", data.name);
       formData.append("symbol", data.symbol);
       formData.append("description", data.description || "");
-      formData.append("image", imageFile);
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
 
       // Upload image to Pinata
       const response = await fetch("/api/uploadToPinata", {
@@ -288,6 +289,9 @@ export default function SolanaTokenCreator() {
         signedMintTransaction = await wallet.signTransaction(mintTransaction);
       } catch (signError) {
         console.error("Error signing transaction:", signError);
+        toast.error(
+          "Failed to sign transaction. Please check your wallet connection and try again."
+        );
         throw new Error(
           "Failed to sign transaction. Please check your wallet connection and try again."
         );
@@ -325,6 +329,9 @@ export default function SolanaTokenCreator() {
             "Fee transaction confirmation issue:",
             feeConfirmation.error
           );
+          toast.error(
+            "Fee transaction confirmation issue. Please check the console for details."
+          );
         }
 
         // Confirm the mint transaction
@@ -337,10 +344,10 @@ export default function SolanaTokenCreator() {
             "Mint transaction confirmation issue:",
             mintConfirmation.error
           );
+          toast.error(
+            "Mint transaction confirmation issue. Please check the console for details."
+          );
         }
-
-        console.log("Fee transaction confirmed:", feeConfirmation);
-        console.log("Mint transaction confirmed:", mintConfirmation);
 
         setTransactionSignatures({
           feeSignature,
@@ -348,9 +355,18 @@ export default function SolanaTokenCreator() {
         });
         setMintAddress(mintKeypair.publicKey.toString());
         setIsSuccess(true);
+        toast.success("Token created successfully!");
+
+        // Add this alert after both transactions are confirmed
+        alert(
+          "Your tokens have been created! Please check your wallet to view your new tokens."
+        );
       } catch (sendError) {
         console.error("Error sending transaction:", sendError);
         setError(
+          "Failed to send transaction. Please check the console for details."
+        );
+        toast.error(
           "Failed to send transaction. Please check the console for details."
         );
         setIsPending(false);
@@ -360,8 +376,10 @@ export default function SolanaTokenCreator() {
       console.error("Token creation failed:", error);
       if (error instanceof Error) {
         setError(`An error occurred: ${error.message}`);
+        toast.error(`An error occurred: ${error.message}`);
       } else {
         setError("An unknown error occurred during token creation");
+        toast.error("An unknown error occurred during token creation");
       }
     } finally {
       setIsPending(false);
@@ -522,6 +540,19 @@ export default function SolanaTokenCreator() {
               Note: Creating an OpenBook market may require additional SOL for
               transaction fees. Ensure your wallet has sufficient balance before
               proceeding.
+            </p>
+          </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Your tokens have been created and should now be visible in your
+              wallet. If you don&apos;t see them immediately, please allow a few
+              moments for your wallet to refresh and display the new tokens.
+            </p>
+            <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+              Token Symbol: {watch("symbol")}
+            </p>
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              Token Supply: {watch("supply")}
             </p>
           </div>
         </div>
@@ -690,7 +721,7 @@ export default function SolanaTokenCreator() {
                   htmlFor="image"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Image*
+                  Image (Optional)
                 </label>
                 <div className="flex items-center justify-center w-full mt-2">
                   <label
@@ -753,7 +784,7 @@ export default function SolanaTokenCreator() {
                   htmlFor="description"
                   className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Description
+                  Description (Optional)
                 </label>
                 <textarea
                   id="description"
@@ -941,10 +972,8 @@ async function confirmTransactionWithPolling(
 
       if (status.value) {
         if (status.value.confirmationStatus === "finalized") {
-          console.log("Transaction finalized:", signature);
           return { success: true, error: null };
         } else if (status.value.confirmationStatus === "confirmed") {
-          console.log("Transaction confirmed:", signature);
           return { success: true, error: null };
         } else if (status.value.err) {
           console.error("Transaction failed with error:", status.value.err);
