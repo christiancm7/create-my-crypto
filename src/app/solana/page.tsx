@@ -13,7 +13,7 @@ import {
   Keypair,
   Connection,
   clusterApiUrl,
-  SendTransactionError,
+  ComputeBudgetProgram,
 } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
@@ -138,20 +138,6 @@ export default function SolanaTokenCreator() {
       console.log("Starting token creation process...");
       console.log("Wallet public key:", wallet.publicKey.toString());
 
-      // Check if wallet is connected
-      if (!wallet.connected || !wallet.publicKey) {
-        throw new Error("Wallet is not connected");
-      }
-
-      console.log("Wallet public key:", wallet.publicKey.toBase58());
-
-      // Check fee recipient
-      if (!feeRecipient) {
-        throw new Error("Fee recipient is not set");
-      }
-
-      console.log("Fee recipient:", feeRecipient.toBase58());
-
       // Prepare form data to send to API route
       const imageFile = data.image?.[0];
       if (!imageFile) {
@@ -166,7 +152,7 @@ export default function SolanaTokenCreator() {
       formData.append("description", data.description || "");
       formData.append("image", imageFile);
 
-      // Send request to API route
+      // Upload image to Pinata
       const response = await fetch("/api/uploadToPinata", {
         method: "POST",
         body: formData,
@@ -179,7 +165,7 @@ export default function SolanaTokenCreator() {
 
       const { metadataUri } = await response.json();
 
-      // Continue with token creation using metadataUri
+      // 1. Fee Transaction - Charge the user 0.1 SOL for the service
       const feeTransaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: wallet.publicKey,
@@ -188,11 +174,8 @@ export default function SolanaTokenCreator() {
         })
       );
 
-      console.log("Fee transaction:", feeTransaction);
-
+      // 2. Create Token Minting Process
       const mintKeypair = Keypair.generate();
-      console.log("Mint keypair public key:", mintKeypair.publicKey.toString());
-
       const mintRent = await connection.getMinimumBalanceForRentExemption(
         MINT_SIZE
       );
@@ -208,23 +191,25 @@ export default function SolanaTokenCreator() {
       const initializeMintIx = createInitializeMintInstruction(
         mintKeypair.publicKey,
         data.decimals,
-        wallet.publicKey,
-        data.revokeFreeze ? null : wallet.publicKey,
+        wallet.publicKey, // Mint authority
+        data.revokeFreeze ? null : wallet.publicKey, // Freeze authority
         TOKEN_PROGRAM_ID
       );
 
+      // Create the associated token account for the user
       const userTokenAddress = await getAssociatedTokenAddress(
         mintKeypair.publicKey,
         wallet.publicKey
       );
 
       const createATAIx = createAssociatedTokenAccountInstruction(
-        wallet.publicKey,
-        userTokenAddress,
-        wallet.publicKey,
-        mintKeypair.publicKey
+        wallet.publicKey, // payer
+        userTokenAddress, // user's associated token account
+        wallet.publicKey, // user's wallet
+        mintKeypair.publicKey // mint
       );
 
+      // Mint the tokens to the user's account
       const mintToIx = createMintToInstruction(
         mintKeypair.publicKey,
         userTokenAddress,
@@ -232,7 +217,7 @@ export default function SolanaTokenCreator() {
         BigInt(data.supply) * BigInt(10 ** data.decimals)
       );
 
-      // Create Metadata Account
+      // 3. Create Metadata for the Token
       const metadataPDA = PublicKey.findProgramAddressSync(
         [
           Buffer.from("metadata"),
@@ -241,11 +226,6 @@ export default function SolanaTokenCreator() {
         ],
         TOKEN_METADATA_PROGRAM_ID
       )[0];
-
-      console.log("Wallet public key:", wallet.publicKey.toString());
-      console.log("Mint keypair public key:", mintKeypair.publicKey.toString());
-      console.log("Fee recipient:", feeRecipient.toString());
-      console.log("Metadata PDA:", metadataPDA.toString());
 
       const tokenMetadata: DataV2 = {
         name: data.name,
@@ -274,6 +254,7 @@ export default function SolanaTokenCreator() {
         }
       );
 
+      // 4. Build the mint transaction
       const mintTransaction = new Transaction().add(
         createMintAccountIx,
         initializeMintIx,
@@ -291,20 +272,16 @@ export default function SolanaTokenCreator() {
           null
         );
         mintTransaction.add(revokeMintAuthorityIx);
-        console.log("Revoke Mint Authority Instruction added");
       }
 
+      // Finalize transaction setup
       const recentBlockhash = await connection.getLatestBlockhash();
       feeTransaction.recentBlockhash = recentBlockhash.blockhash;
       feeTransaction.feePayer = wallet.publicKey;
       mintTransaction.recentBlockhash = recentBlockhash.blockhash;
       mintTransaction.feePayer = wallet.publicKey;
 
-      // Check if wallet is connected before signing
-      if (!wallet.signTransaction) {
-        throw new Error("Wallet does not support transaction signing");
-      }
-
+      // Sign the transactions
       let signedFeeTransaction, signedMintTransaction;
       try {
         signedFeeTransaction = await wallet.signTransaction(feeTransaction);
@@ -316,23 +293,19 @@ export default function SolanaTokenCreator() {
         );
       }
 
+      // Partial sign for the mint keypair
       signedMintTransaction.partialSign(mintKeypair);
 
-      console.log("Transactions signed successfully");
+      // Add priority fee instruction if needed (optional, adjust as needed)
+      const priorityFee = 1000000; // 1 LAMPORT, adjust as needed
+      const addPriorityFeeIx = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: priorityFee,
+      });
 
-      // Check account balance
-      const balance = await connection.getBalance(wallet.publicKey);
-      const requiredBalance = (totalFee + 0.02) * LAMPORTS_PER_SOL; // Buffer for transaction fees
-      if (balance < requiredBalance) {
-        setError(
-          `Insufficient balance. You need at least ${(
-            requiredBalance / LAMPORTS_PER_SOL
-          ).toFixed(2)} SOL to create this token.`
-        );
-        setIsPending(false);
-        return;
-      }
+      feeTransaction.add(addPriorityFeeIx);
+      mintTransaction.add(addPriorityFeeIx);
 
+      // Send the transactions
       let feeSignature, mintSignature;
       try {
         feeSignature = await connection.sendRawTransaction(
@@ -342,27 +315,47 @@ export default function SolanaTokenCreator() {
           signedMintTransaction.serialize()
         );
 
-        await connection.confirmTransaction(feeSignature, "confirmed");
-        await connection.confirmTransaction(mintSignature, "confirmed");
-      } catch (sendError) {
-        if (sendError instanceof SendTransactionError) {
-          console.error("Transaction error logs:", sendError.logs);
-          setError(`Failed to send transaction. Error: ${sendError.message}`);
-        } else {
-          console.error("Error sending transaction:", sendError);
-          setError("Failed to send transaction. Please try again later.");
+        // Confirm the fee transaction
+        const feeConfirmation = await confirmTransactionWithPolling(
+          connection,
+          feeSignature
+        );
+        if (!feeConfirmation.success) {
+          console.warn(
+            "Fee transaction confirmation issue:",
+            feeConfirmation.error
+          );
         }
+
+        // Confirm the mint transaction
+        const mintConfirmation = await confirmTransactionWithPolling(
+          connection,
+          mintSignature
+        );
+        if (!mintConfirmation.success) {
+          console.warn(
+            "Mint transaction confirmation issue:",
+            mintConfirmation.error
+          );
+        }
+
+        console.log("Fee transaction confirmed:", feeConfirmation);
+        console.log("Mint transaction confirmed:", mintConfirmation);
+
+        setTransactionSignatures({
+          feeSignature,
+          mintSignature,
+        });
+        setMintAddress(mintKeypair.publicKey.toString());
+        setIsSuccess(true);
+      } catch (sendError) {
+        console.error("Error sending transaction:", sendError);
+        setError(
+          "Failed to send transaction. Please check the console for details."
+        );
         setIsPending(false);
         return;
       }
-
-      setTransactionSignatures({
-        feeSignature,
-        mintSignature,
-      });
-      console.log("Mint keypair public key:", mintKeypair.publicKey.toString());
-      setMintAddress(mintKeypair.publicKey.toString());
-      setIsSuccess(true);
     } catch (error: unknown) {
       console.error("Token creation failed:", error);
       if (error instanceof Error) {
@@ -932,4 +925,52 @@ export default function SolanaTokenCreator() {
       </div>
     </div>
   );
+}
+
+async function confirmTransactionWithPolling(
+  connection: Connection,
+  signature: string,
+  maxRetries = 5,
+  retryDelay = 2000
+) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const status = await connection.getSignatureStatus(signature, {
+        searchTransactionHistory: true,
+      });
+
+      if (status.value) {
+        if (status.value.confirmationStatus === "finalized") {
+          console.log("Transaction finalized:", signature);
+          return { success: true, error: null };
+        } else if (status.value.confirmationStatus === "confirmed") {
+          console.log("Transaction confirmed:", signature);
+          return { success: true, error: null };
+        } else if (status.value.err) {
+          console.error("Transaction failed with error:", status.value.err);
+          return { success: false, error: status.value.err.toString() };
+        }
+      }
+
+      console.warn(`Transaction not confirmed yet. Attempt: ${attempt + 1}`);
+    } catch (error) {
+      console.error(
+        `Error checking transaction status on attempt ${attempt + 1}:`,
+        error
+      );
+      if (attempt === maxRetries - 1) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, retryDelay));
+  }
+
+  return {
+    success: false,
+    error: "Transaction confirmation timeout after max retries",
+  };
 }
