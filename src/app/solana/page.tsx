@@ -55,6 +55,7 @@ export default function SolanaTokenCreator() {
     formState: { errors },
     watch,
     setValue,
+    reset, // Add this
   } = useForm<FormData>();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [totalFee, setTotalFee] = useState(0.5);
@@ -166,12 +167,13 @@ export default function SolanaTokenCreator() {
 
       const { metadataUri } = await response.json();
 
-      // 1. Fee Transaction - Charge the user 0.1 SOL for the service
+      // 1. Fee Transaction - Charge the user for the service
+      const feeInLamports = Math.round(totalFee * LAMPORTS_PER_SOL); // Round to nearest integer
       const feeTransaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: wallet.publicKey,
           toPubkey: feeRecipient,
-          lamports: totalFee * LAMPORTS_PER_SOL,
+          lamports: feeInLamports,
         })
       );
 
@@ -244,12 +246,12 @@ export default function SolanaTokenCreator() {
           mint: mintKeypair.publicKey,
           mintAuthority: wallet.publicKey,
           payer: wallet.publicKey,
-          updateAuthority: data.immutable ? null : wallet.publicKey,
+          updateAuthority: wallet.publicKey, // Always set this to wallet.publicKey
         },
         {
           createMetadataAccountArgsV3: {
             data: tokenMetadata,
-            isMutable: !data.immutable,
+            isMutable: !data.immutable, // This controls whether the metadata can be updated
             collectionDetails: null,
           },
         }
@@ -361,6 +363,14 @@ export default function SolanaTokenCreator() {
         alert(
           "Your tokens have been created! Please check your wallet to view your new tokens."
         );
+
+        // Clear the form and reset state
+        reset(); // This resets all form fields
+        setImagePreview(null);
+        setTotalFee(0.5); // Reset to initial fee
+
+        // Optionally, you can scroll to the top of the page
+        window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (sendError) {
         console.error("Error sending transaction:", sendError);
         setError(
