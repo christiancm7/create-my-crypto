@@ -10,7 +10,7 @@ const faqs = [
   {
     question: "How much does it cost to create a token?",
     answer:
-      "The token creation cost varies by network. It costs 0.5 SOL on Solana, and 0.01 ETH on Ethereum or Base mainnet. These fees cover all necessary costs for token creation on the chosen network.",
+      "The token creation cost varies by network. It costs 0.2 SOL on Solana, and 0.01 ETH on Ethereum or Base mainnet. These fees cover all necessary costs for token creation on the chosen network.",
   },
   {
     question: "How long does the token creation process take?",

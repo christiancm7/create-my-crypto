@@ -58,7 +58,7 @@ export default function SolanaTokenCreator() {
     reset, // Add this
   } = useForm<FormData>();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [totalFee, setTotalFee] = useState(0.5);
+  const [totalFee, setTotalFee] = useState(0.2);
   const [isPending, setIsPending] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [transactionSignatures, setTransactionSignatures] = useState<{
@@ -367,7 +367,7 @@ export default function SolanaTokenCreator() {
         // Clear the form and reset state
         reset(); // This resets all form fields
         setImagePreview(null);
-        setTotalFee(0.5); // Reset to initial fee
+        setTotalFee(0.2); // Reset to initial fee
 
         // Optionally, you can scroll to the top of the page
         window.scrollTo({ top: 0, behavior: "smooth" });

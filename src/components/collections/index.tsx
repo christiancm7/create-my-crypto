@@ -21,7 +21,7 @@ const tokenTypes: Blockchain[] = [
     name: "Solana",
     standardToken: {
       name: "SPL Token",
-      price: "0.1 SOL",
+      price: "0.2 SOL",
       description:
         "Create Solana Program Library (SPL) tokens with ease. Includes features like metadata and associated token accounts.",
       features: ["spl-token", "metadata", "logo"],
